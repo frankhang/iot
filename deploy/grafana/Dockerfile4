@@ -18,6 +18,8 @@ RUN mv * grafana.tar.gz \
 
 WORKDIR /go/src/${PRJ_DIR}dist/grafana
 RUN bin/grafana-cli plugins install grafana-image-renderer 1.0.5
+
+ADD https://raw.githubusercontent.com/frankhang/iot/master/deploy/grafana/agri-demo.ini conf/defaults.ini
 CMD ["bin/grafana-server", "web"]
 
 
