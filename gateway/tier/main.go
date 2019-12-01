@@ -287,7 +287,7 @@ func printInfo() {
 }
 
 func createServer() {
-	tierDriver := NewTireDriver(&DefaultTierPacketIO)
+	tierDriver := NewTireDriver(cfg, &DefaultTierPacketIO, &DefaultTierHanlder)
 	var err error
 	svr, err = tcp.NewServer(cfg, tierDriver)
 	errors.MustNil(err)

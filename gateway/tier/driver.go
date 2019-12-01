@@ -7,17 +7,25 @@ import (
 
 // TireDriver implements tcp.IDriver.
 type TireDriver struct {
+	cfg *tcp.Config
 	tierIO *TierPacketIO
+	tierHandler *TierHandler
+
 }
 
 // NewTireDriver creates a new TireDriver.
-func NewTireDriver(tierIO *TierPacketIO) *TireDriver {
+func NewTireDriver(cfg *tcp.Config, tierIO *TierPacketIO, tierHandler *TierHandler) *TireDriver {
 	driver := &TireDriver{
+		cfg: cfg,
 		tierIO: tierIO,
+		tierHandler:tierHandler,
 	}
-	tierIO.tierDriver = driver
+	tierIO.driver = driver
+	tierHandler.driver = driver
+
 	return driver
 }
+
 
 // TireContext implements QueryCtx.
 type TireContext struct {
@@ -30,6 +38,11 @@ type TireStatement struct {
 	ctx *TireContext
 }
 
+
+func (td *TireDriver) OpenCtx(connID uint64, capability uint32, collation uint8, dbname string, tlsState *tls.ConnectionState) (tcp.QueryCtx, error) {
+	return nil, nil
+}
+
 func (td *TireDriver) GetPacketReader() tcp.PacketReader {
 	return td.tierIO
 }
@@ -38,6 +51,14 @@ func (td *TireDriver) GetPacketWriter() tcp.PacketWriter {
 	return td.tierIO
 }
 
-func (td *TireDriver) OpenCtx(connID uint64, capability uint32, collation uint8, dbname string, tlsState *tls.ConnectionState) (tcp.QueryCtx, error) {
-	return nil, nil
+
+func (td *TireDriver) SetPacketIO(packetIO *tcp.PacketIO) {
+	td.tierIO.PacketIO = packetIO
+
 }
+
+func (td *TireDriver) GetHandler() tcp.Handler {
+	return td.tierHandler
+}
+
+

@@ -1,9 +1,13 @@
-module mod-demo
+module github.com/frankhang/iot
 
 go 1.13
 
+replace github.com/frankhang/util => /Users/hang/go/src/github.com/frankhang/util
+
+replace github.com/frankhang/iot => /Users/hang/go/src/github.com/frankhang/iot
+
 require (
-	github.com/frankhang/util v0.0.0-20191201120454-f6d2c95bbf70
+	github.com/frankhang/util v0.0.0-00010101000000-000000000000
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/prometheus/client_golang v1.2.1
 	github.com/struCoder/pidusage v0.1.2
