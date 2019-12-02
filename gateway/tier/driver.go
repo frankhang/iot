@@ -35,7 +35,7 @@ func (td *TireDriver) OpenCtx(connID uint64, capability uint32, collation uint8,
 }
 
 func (td *TireDriver) GeneratePacketIO(cc *tcp.ClientConn) *tcp.PacketIO {
-	packetIO := tcp.NewPacketIO(cc.BufReadConn)
+	packetIO := tcp.NewPacketIO(cc)
 
 	tierPacketIO := NewTierPacketIO(packetIO, td)
 	tierHandler := NewTierHandler(tierPacketIO, td)

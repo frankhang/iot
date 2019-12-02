@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-
-
 //tierPacketIO implements PacketReader and PacketWriter
 type TierPacketIO struct {
 	*tcp.PacketIO
@@ -19,13 +17,9 @@ type TierPacketIO struct {
 func NewTierPacketIO(packetIO *tcp.PacketIO, driver *TireDriver) *TierPacketIO {
 	return &TierPacketIO{
 		PacketIO: packetIO,
-		driver: driver,
+		driver:   driver,
 	}
 }
-
-
-
-
 
 func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 	var header [8]byte
@@ -42,20 +36,23 @@ func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 
 	length := int(header[5])
 
-	data := make([]byte, length - 8)
+	//buf := make([]byte, length-8)
+	buf := p.Alloc.AllocWithLen(length-8, length-8)
 	if waitTimeout > 0 {
 		if err := p.BufReadConn.SetReadDeadline(time.Now().Add(waitTimeout)); err != nil {
 			return nil, err
 		}
 	}
-	if _, err := io.ReadFull(p.BufReadConn, data); err != nil {
+	if _, err := io.ReadFull(p.BufReadConn, buf); err != nil {
 		return nil, errors.Trace(err)
 	}
-	return data, nil
+	data := p.Alloc.AllocWithLen(length, length)
+	copy(data, header[:])
+	copy(data[8:], buf)
+	return buf, nil
 
 }
 
 func (p *TierPacketIO) WritePacket(data []byte) error {
 	return nil
 }
-
