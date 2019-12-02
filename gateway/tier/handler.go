@@ -5,11 +5,18 @@ import (
 	"github.com/frankhang/util/tcp"
 )
 
-var DefaultTierHanlder TierHandler
+
 //tierHandler implements Hanlder
 type TierHandler struct {
+	*TierPacketIO
+
 	driver *TireDriver
 }
+
+func NewTierHandler(tierPacketIO *TierPacketIO, driver *TireDriver) *TierHandler {
+	return &TierHandler{TierPacketIO: tierPacketIO, driver: driver}
+}
+
 
 func (th *TierHandler) Handle(ctx context.Context, cc *tcp.ClientConn, data []byte) error {
 	return nil

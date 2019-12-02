@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var DefaultTierPacketIO TierPacketIO
+
 
 //tierPacketIO implements PacketReader and PacketWriter
 type TierPacketIO struct {
@@ -16,9 +16,18 @@ type TierPacketIO struct {
 	driver *TireDriver
 }
 
+func NewTierPacketIO(packetIO *tcp.PacketIO, driver *TireDriver) *TierPacketIO {
+	return &TierPacketIO{
+		PacketIO: packetIO,
+		driver: driver,
+	}
+}
 
 
-func (p *TierPacketIO) ReadOnePacket() ([]byte, error) {
+
+
+
+func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 	var header [8]byte
 
 	waitTimeout := time.Duration(p.driver.cfg.ReadTimeout)
