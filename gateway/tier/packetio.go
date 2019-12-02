@@ -22,7 +22,7 @@ func NewTierPacketIO(packetIO *tcp.PacketIO, driver *TireDriver) *TierPacketIO {
 }
 
 func (p *TierPacketIO) ReadPacket() ([]byte, error) {
-	var header [8]byte
+	var header [9]byte
 
 	waitTimeout := time.Duration(p.driver.cfg.ReadTimeout)
 	if waitTimeout > 0 {
@@ -34,10 +34,14 @@ func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 		return nil, errors.Trace(err)
 	}
 
-	length := int(header[5])
+	length := int(header[6])
+
+	if length == 0 {
+		return header[:], nil
+	}
 
 	//buf := make([]byte, length-8)
-	buf := p.Alloc.AllocWithLen(length-8, length-8)
+	buf := p.Alloc.AllocWithLen(length-9, length-9)
 	if waitTimeout > 0 {
 		if err := p.BufReadConn.SetReadDeadline(time.Now().Add(waitTimeout)); err != nil {
 			return nil, err
@@ -46,6 +50,8 @@ func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 	if _, err := io.ReadFull(p.BufReadConn, buf); err != nil {
 		return nil, errors.Trace(err)
 	}
+
+	//generate whole packet
 	data := p.Alloc.AllocWithLen(length, length)
 	copy(data, header[:])
 	copy(data[8:], buf)
@@ -54,5 +60,14 @@ func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 }
 
 func (p *TierPacketIO) WritePacket(data []byte) error {
-	return nil
+
+	if n, err := p.Write(data); err != nil {
+		errors.Log(errors.Trace(err))
+		return errors.Trace(errors.ErrBadConn.GenWithStackByArgs(p.ConnectionID))
+	} else if n != len(data) {
+		return errors.Trace(errors.ErrBadConn.GenWithStackByArgs(p.ConnectionID))
+	} else {
+		return nil
+	}
+
 }

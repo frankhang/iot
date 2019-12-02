@@ -16,7 +16,7 @@ type TierHandler struct {
 
 func NewTierHandler(tierPacketIO *TierPacketIO, driver *TireDriver) *TierHandler {
 	handler := &TierHandler{TierPacketIO: tierPacketIO, driver: driver}
-	handler.ctl = &Controller{}
+	handler.ctl = &Controller{TierPacketIO: tierPacketIO}
 	return handler
 }
 
@@ -30,9 +30,9 @@ func (th *TierHandler) Handle(ctx context.Context, cc *tcp.ClientConn, data []by
 	//dispach cmd process logic to controller
 	switch cmd {
 	case 0x55:
-		ctl.TirePressureReport(data)
+		return ctl.TirePressureReport(data)
 	case 0x57:
-		ctl.TireReplaceAck(data)
+		return ctl.TireReplaceAck(data)
 	}
 
 	return nil
