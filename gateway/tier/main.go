@@ -17,6 +17,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+
 	"os"
 	"runtime"
 	"strconv"
@@ -128,7 +129,7 @@ func main() {
 
 	registerMetrics()
 	configWarning := loadConfig()
-
+	//overrideConfig()
 	if err := cfg.Valid(); err != nil {
 		fmt.Fprintln(os.Stderr, "invalid config", err)
 		os.Exit(1)
@@ -259,12 +260,6 @@ func flagBoolean(name string, defaultVal bool, usage string) *bool {
 //	"log.rotate":          {},
 //}
 
-func loadConfig() string {
-
-	//errors.MustNil(err)
-
-	return ""
-}
 
 func setGlobalVars() {
 
@@ -351,4 +346,35 @@ func cleanup() {
 		svr.TryGracefulDown()
 	}
 
+}
+
+func reloadConfig(nc, c *tcp.Config) {
+
+}
+
+
+func loadConfig() string {
+	cfg = tcp.GetGlobalConfig()
+	if *configPath != "" {
+		// Not all config items are supported now.
+		//config.SetConfReloader(*configPath, reloadConfig, hotReloadConfigItems...)
+
+		err := cfg.Load(*configPath)
+		if err == nil {
+			return ""
+		}
+
+
+		errors.MustNil(err)
+	} else {
+		// configCheck should have the config file specified.
+		if *configCheck {
+			fmt.Fprintln(os.Stderr, "config check failed", errors.New("no config file specified for config-check"))
+			os.Exit(1)
+		}
+	}
+	return ""
+}
+
+func overrideConfig() {
 }
