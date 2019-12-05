@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
+	"fmt"
 	"github.com/frankhang/util/tcp"
 )
 
@@ -26,6 +28,7 @@ func (th *TierHandler) Handle(ctx context.Context, cc *tcp.ClientConn, data []by
 	ctl.ctx = ctx
 	ctl.cc = cc
 
+	fmt.Printf("Handle: 【%s】\n", hex.EncodeToString(data))
 	cmd := data[0]
 	//dispach cmd process logic to controller
 	switch cmd {

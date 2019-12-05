@@ -24,21 +24,23 @@ func NewTierPacketIO(packetIO *tcp.PacketIO, driver *TireDriver) *TierPacketIO {
 func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 	var header [9]byte
 
-	waitTimeout := time.Duration(p.driver.cfg.ReadTimeout)
+	waitTimeout := time.Duration(p.driver.cfg.ReadTimeout)*time.Second
 	if waitTimeout > 0 {
 		if err := p.BufReadConn.SetReadDeadline(time.Now().Add(waitTimeout)); err != nil {
 			return nil, err
 		}
 	}
 	if _, err := io.ReadFull(p.BufReadConn, header[:]); err != nil {
+		//fmt.Printf("ReadFull: %s\n" , errors.Trace(err))
 		return nil, errors.Trace(err)
+		//return nil, err
 	}
 
+	//fmt.Printf("header9: %s\n", hex.EncodeToString(header[:]))
 	length := int(header[6])
 
-	if length == 0 {
-		return header[:], nil
-	}
+	println("length: ", length)
+
 
 	//buf := make([]byte, length-8)
 	buf := p.Alloc.AllocWithLen(length-9, length-9)
@@ -51,11 +53,15 @@ func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 		return nil, errors.Trace(err)
 	}
 
+	//fmt.Printf("buf: %s\n", hex.EncodeToString(buf[:]))
+
 	//generate whole packet
 	data := p.Alloc.AllocWithLen(length, length)
 	copy(data, header[:])
-	copy(data[8:], buf)
-	return buf, nil
+	copy(data[9:], buf)
+
+	//fmt.Printf("ReadPacket: [%s]\n", hex.EncodeToString(data))
+	return data, nil
 
 }
 
