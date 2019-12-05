@@ -39,8 +39,8 @@ var (
 
 func main() {
 
-	//conn, err := net.Dial("tcp", "iot.cectiy.com:10001")
-	conn, err := net.Dial("tcp", "localhost:10001")
+	conn, err := net.Dial("tcp", "iot.cectiy.com:10001")
+	//conn, err := net.Dial("tcp", "localhost:10001")
 	if err != nil {
 		fmt.Println("check server")
 		return
