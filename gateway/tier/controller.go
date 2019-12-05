@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/frankhang/util/logutil"
 	"github.com/frankhang/util/tcp"
 	"github.com/frankhang/util/util"
-	"go.uber.org/zap"
 )
 
 type Controller struct {
@@ -17,9 +15,7 @@ type Controller struct {
 }
 
 func (c *Controller) TirePressureReport(data []byte) error {
-	//logutil.Logger(c.ctx).Info("TirePressureReport: [%x].", zap.ByteString("packetData", data))
-	fmt.Printf("TirePressureReport: [%x].\n", data)
-	fmt.Printf("TirePressureReport: sum=[%x]\n", util.Sum(data[:len(data)-1]))
+	logutil.Logger(c.ctx).Info("controller")
 
 	var s int
 
@@ -46,9 +42,7 @@ func (c *Controller) TirePressureReport(data []byte) error {
 }
 
 func (c *Controller) TireReplaceAck(data []byte) error {
-	logutil.Logger(c.ctx).Info("TireReplaceAck: [%x].", zap.ByteString("packetData", data))
-	fmt.Printf("TireReplaceAck: [%x].\n", data)
-
+	logutil.Logger(c.ctx).Info("controller")
 	return nil
 
 }

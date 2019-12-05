@@ -4,7 +4,6 @@ import (
 	"github.com/frankhang/util/errors"
 	"github.com/frankhang/util/tcp"
 	"io"
-	"time"
 )
 
 //tierPacketIO implements PacketReader and PacketWriter
@@ -24,12 +23,7 @@ func NewTierPacketIO(packetIO *tcp.PacketIO, driver *TireDriver) *TierPacketIO {
 func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 	var header [9]byte
 
-	waitTimeout := time.Duration(p.driver.cfg.ReadTimeout)*time.Second
-	if waitTimeout > 0 {
-		if err := p.BufReadConn.SetReadDeadline(time.Now().Add(waitTimeout)); err != nil {
-			return nil, err
-		}
-	}
+	p.SetReadTimeout()
 	if _, err := io.ReadFull(p.BufReadConn, header[:]); err != nil {
 		//fmt.Printf("ReadFull: %s\n" , errors.Trace(err))
 		return nil, errors.Trace(err)
@@ -39,16 +33,13 @@ func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 	//fmt.Printf("header9: %s\n", hex.EncodeToString(header[:]))
 	length := int(header[6])
 
-	println("length: ", length)
+	//println("length: ", length)
 
 
 	//buf := make([]byte, length-8)
 	buf := p.Alloc.AllocWithLen(length-9, length-9)
-	if waitTimeout > 0 {
-		if err := p.BufReadConn.SetReadDeadline(time.Now().Add(waitTimeout)); err != nil {
-			return nil, err
-		}
-	}
+
+	p.SetReadTimeout()
 	if _, err := io.ReadFull(p.BufReadConn, buf); err != nil {
 		return nil, errors.Trace(err)
 	}
