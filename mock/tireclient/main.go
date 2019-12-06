@@ -14,9 +14,7 @@ const (
 	defaultWriterSize = 4096
 )
 
-var (
-//bufWriter = bufio.NewWriterSize(bufReadConn, defaultWriterSize)
-)
+
 
 type bufferedReadConn struct {
 	net.Conn
@@ -33,14 +31,15 @@ func (conn *bufferedReadConn) Read(b []byte) (n int, err error) {
 	return conn.rb.Read(b)
 }
 
+
 var (
 //bufio.NewWriterSize(p.BufReadConn, defaultWriterSize)
 )
 
 func main() {
 
-	conn, err := net.Dial("tcp", "iot.cectiy.com:10001")
-	//conn, err := net.Dial("tcp", "localhost:10001")
+	//conn, err := net.Dial("tcp", "iot.cectiy.com:10001")
+	conn, err := net.Dial("tcp", "localhost:10001")
 	if err != nil {
 		fmt.Println("check server")
 		return
