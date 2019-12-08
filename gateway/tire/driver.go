@@ -2,16 +2,17 @@ package main
 
 import (
 	"crypto/tls"
+	"github.com/frankhang/util/config"
 	"github.com/frankhang/util/tcp"
 )
 
 // TireDriver implements tcp.IDriver.
 type TireDriver struct {
-	cfg *tcp.Config
+	cfg *config.Config
 }
 
 // NewTireDriver creates a new TireDriver.
-func NewTireDriver(cfg *tcp.Config) *TireDriver {
+func NewTireDriver(cfg *config.Config) *TireDriver {
 	driver := &TireDriver{
 		cfg: cfg,
 	}

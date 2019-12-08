@@ -17,13 +17,15 @@ import (
 	"context"
 	"flag"
 	"fmt"
-
+	"github.com/frankhang/util/logutil"
+	"go.uber.org/automaxprocs/maxprocs"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/frankhang/util/config"
 	"github.com/frankhang/util/sys/linux"
 	"github.com/frankhang/util/tcp"
 
@@ -115,10 +117,20 @@ var (
 )
 
 var (
-	cfg      *tcp.Config
+	cfg      *config.Config
 	svr      *tcp.Server
 	graceful bool
 )
+
+var deprecatedConfig = map[string]struct{}{
+	"pessimistic-txn.ttl": {},
+	"log.rotate":          {},
+}
+// hotReloadConfigItems lists all config items which support hot-reload.
+var hotReloadConfigItems = []string{"Performance.MaxProcs", "Performance.MaxMemory", "Performance.CrossJoin",
+	"Performance.FeedbackProbability", "Performance.QueryFeedbackLimit", "Performance.PseudoEstimateRatio",
+	"OOMUseTmpStorage", "OOMAction", "MemQuotaQuery", "StmtSummary.MaxStmtCount", "StmtSummary.MaxSQLLength", "Log.QueryLogMaxLen",
+	"TiKVClient.EnableChunkRPC", "TiKVClient.StoreLimit"}
 
 func main() {
 	flag.Parse()
@@ -129,7 +141,7 @@ func main() {
 
 	registerMetrics()
 	configWarning := loadConfig()
-	//overrideConfig()
+	overrideConfig()
 	if err := cfg.Valid(); err != nil {
 		fmt.Fprintln(os.Stderr, "invalid config", err)
 		os.Exit(1)
@@ -263,14 +275,21 @@ func flagBoolean(name string, defaultVal bool, usage string) *bool {
 
 func setGlobalVars() {
 
+	runtime.GOMAXPROCS(int(cfg.Performance.MaxProcs))
+
 }
 
+
 func setupLog() {
-	//err := logutil.InitZapLogger(cfg.Log.ToLogConfig())
-	//errors.MustNil(err)
-	//
-	//err = logutil.InitLogger(cfg.Log.ToLogConfig())
-	//errors.MustNil(err)
+	err := logutil.InitZapLogger(cfg.Log.ToLogConfig())
+	errors.MustNil(err)
+
+	err = logutil.InitLogger(cfg.Log.ToLogConfig())
+	errors.MustNil(err)
+	// Disable automaxprocs log
+	nopLog := func(string, ...interface{}) {}
+	_, err = maxprocs.Set(maxprocs.Logger(nopLog))
+	errors.MustNil(err)
 }
 
 func printInfo() {
@@ -348,22 +367,67 @@ func cleanup() {
 
 }
 
-func reloadConfig(nc, c *tcp.Config) {
-
+func reloadConfig(nc, c *config.Config) {
+	// Just a part of config items need to be reload explicitly.
+	// Some of them like OOMAction are always used by getting from global config directly
+	// like config.GetGlobalConfig().OOMAction.
+	// These config items will become available naturally after the global config pointer
+	// is updated in function ReloadGlobalConfig.
+	if nc.Performance.MaxMemory != c.Performance.MaxMemory {
+		//
+	}
+	if nc.Performance.CrossJoin != c.Performance.CrossJoin {
+		//
+	}
+	if nc.Performance.FeedbackProbability != c.Performance.FeedbackProbability {
+		//
+	}
+	if nc.Performance.QueryFeedbackLimit != c.Performance.QueryFeedbackLimit {
+		//
+	}
+	if nc.Performance.PseudoEstimateRatio != c.Performance.PseudoEstimateRatio {
+		//
+	}
+	if nc.TiKVClient.StoreLimit != c.TiKVClient.StoreLimit {
+		//
+	}
 }
 
 
+
+
+func isDeprecatedConfigItem(items []string) bool {
+	for _, item := range items {
+		if _, ok := deprecatedConfig[item]; !ok {
+			return false
+		}
+	}
+	return true
+}
 func loadConfig() string {
-	cfg = tcp.GetGlobalConfig()
+	cfg = config.GetGlobalConfig()
 	if *configPath != "" {
 		// Not all config items are supported now.
-		//config.SetConfReloader(*configPath, reloadConfig, hotReloadConfigItems...)
+		config.SetConfReloader(*configPath, reloadConfig, hotReloadConfigItems...)
 
 		err := cfg.Load(*configPath)
 		if err == nil {
 			return ""
 		}
 
+		// Unused config item erro turns to warnings.
+		if tmp, ok := err.(*config.ErrConfigValidationFailed); ok {
+			if isDeprecatedConfigItem(tmp.UndecodedItems) {
+				return err.Error()
+			}
+			// This block is to accommodate an interim situation where strict config checking
+			// is not the default behavior of TiDB. The warning message must be deferred until
+			// logging has been set up. After strict config checking is the default behavior,
+			// This should all be removed.
+			if !*configCheck && !*configStrict {
+				return err.Error()
+			}
+		}
 
 		errors.MustNil(err)
 	} else {
@@ -377,4 +441,96 @@ func loadConfig() string {
 }
 
 func overrideConfig() {
+	actualFlags := make(map[string]bool)
+	flag.Visit(func(f *flag.Flag) {
+		actualFlags[f.Name] = true
+	})
+
+	// Base
+	if actualFlags[nmHost] {
+		cfg.Host = *host
+	}
+	if actualFlags[nmAdvertiseAddress] {
+		cfg.AdvertiseAddress = *advertiseAddress
+	}
+	if len(cfg.AdvertiseAddress) == 0 {
+		cfg.AdvertiseAddress = cfg.Host
+	}
+	var err error
+	if actualFlags[nmPort] {
+		var p int
+		p, err = strconv.Atoi(*port)
+		errors.MustNil(err)
+		cfg.Port = uint(p)
+	}
+	if actualFlags[nmCors] {
+		fmt.Println(cors)
+		cfg.Cors = *cors
+	}
+	if actualFlags[nmStore] {
+		cfg.Store = *store
+	}
+	if actualFlags[nmStorePath] {
+		cfg.Path = *storePath
+	}
+	if actualFlags[nmSocket] {
+		cfg.Socket = *socket
+	}
+	if actualFlags[nmEnableBinlog] {
+		cfg.Binlog.Enable = *enableBinlog
+	}
+	if actualFlags[nmRunDDL] {
+		cfg.RunDDL = *runDDL
+	}
+	if actualFlags[nmDdlLease] {
+		cfg.Lease = *ddlLease
+	}
+	if actualFlags[nmTokenLimit] {
+		cfg.TokenLimit = uint(*tokenLimit)
+	}
+	if actualFlags[nmPluginLoad] {
+		cfg.Plugin.Load = *pluginLoad
+	}
+	if actualFlags[nmPluginDir] {
+		cfg.Plugin.Dir = *pluginDir
+	}
+
+	// Log
+	if actualFlags[nmLogLevel] {
+		cfg.Log.Level = *logLevel
+	}
+	if actualFlags[nmLogFile] {
+		cfg.Log.File.Filename = *logFile
+	}
+	if actualFlags[nmLogSlowQuery] {
+		cfg.Log.SlowQueryFile = *logSlowQuery
+	}
+
+	// Status
+	if actualFlags[nmReportStatus] {
+		cfg.Status.ReportStatus = *reportStatus
+	}
+	if actualFlags[nmStatusHost] {
+		cfg.Status.StatusHost = *statusHost
+	}
+	if actualFlags[nmStatusPort] {
+		var p int
+		p, err = strconv.Atoi(*statusPort)
+		errors.MustNil(err)
+		cfg.Status.StatusPort = uint(p)
+	}
+	if actualFlags[nmMetricsAddr] {
+		cfg.Status.MetricsAddr = *metricsAddr
+	}
+	if actualFlags[nmMetricsInterval] {
+		cfg.Status.MetricsInterval = *metricsInterval
+	}
+
+	// PROXY Protocol
+	if actualFlags[nmProxyProtocolNetworks] {
+		cfg.ProxyProtocol.Networks = *proxyProtocolNetworks
+	}
+	if actualFlags[nmProxyProtocolHeaderTimeout] {
+		cfg.ProxyProtocol.HeaderTimeout = *proxyProtocolHeaderTimeout
+	}
 }
