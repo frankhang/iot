@@ -31,10 +31,9 @@ func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 	}
 
 	//fmt.Printf("header9: %s\n", hex.EncodeToString(header[:]))
-	length := int(header[6])
+	length := int(uint8(header[6]))
 
 	//println("length: ", length)
-
 
 	//buf := make([]byte, length-8)
 	buf := p.Alloc.AllocWithLen(length-9, length-9)
