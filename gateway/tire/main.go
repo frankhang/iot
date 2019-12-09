@@ -72,7 +72,7 @@ var (
 	// Base
 
 	host             = flag.String(nmHost, "0.0.0.0", "server host")
-	port             = flag.String(nmPort, "4000", "server port")
+	port             = flag.String(nmPort, "10001", "server port")
 	tokenLimit       = flag.Int(nmTokenLimit, 1000, "the limit of concurrent executed sessions")
 	affinityCPU      = flag.String(nmAffinityCPU, "", "affinity cpu (cpu-no. separated by comma, e.g. 1,2,3)")
 
@@ -100,10 +100,7 @@ var deprecatedConfig = map[string]struct{}{
 	"log.rotate":          {},
 }
 // hotReloadConfigItems lists all config items which support hot-reload.
-var hotReloadConfigItems = []string{"Performance.MaxProcs", "Performance.MaxMemory", "Performance.CrossJoin",
-	"Performance.FeedbackProbability", "Performance.QueryFeedbackLimit", "Performance.PseudoEstimateRatio",
-	"OOMUseTmpStorage", "OOMAction", "MemQuotaQuery", "StmtSummary.MaxStmtCount", "StmtSummary.MaxSQLLength", "Log.QueryLogMaxLen",
-	"TiKVClient.EnableChunkRPC", "TiKVClient.StoreLimit"}
+var hotReloadConfigItems = []string{"Performance.MaxProcs", "Performance.MaxMemory", "OOMAction", "MemQuotaQuery"}
 
 func main() {
 	flag.Parse()
@@ -349,21 +346,7 @@ func reloadConfig(nc, c *config.Config) {
 	if nc.Performance.MaxMemory != c.Performance.MaxMemory {
 		//
 	}
-	if nc.Performance.CrossJoin != c.Performance.CrossJoin {
-		//
-	}
-	if nc.Performance.FeedbackProbability != c.Performance.FeedbackProbability {
-		//
-	}
-	if nc.Performance.QueryFeedbackLimit != c.Performance.QueryFeedbackLimit {
-		//
-	}
-	if nc.Performance.PseudoEstimateRatio != c.Performance.PseudoEstimateRatio {
-		//
-	}
-	if nc.TiKVClient.StoreLimit != c.TiKVClient.StoreLimit {
-		//
-	}
+
 }
 
 
