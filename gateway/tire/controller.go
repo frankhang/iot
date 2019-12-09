@@ -21,7 +21,7 @@ func (c *Controller) TirePressureReport(data []byte) error {
 
 	h := []byte{0x56, 0xAA, 0x00, 0xff, 0xEE, 0xEE}
 	s += util.Sum(h)
-	if err := c.WritePacket(h); err != nil {
+	if err := c.WritePacket(c.ctx, h); err != nil {
 		return err
 	}
 
@@ -33,7 +33,7 @@ func (c *Controller) TirePressureReport(data []byte) error {
 	//check sum
 	dd = append(dd, byte(s))
 
-	if err := c.WritePacket(dd); err != nil {
+	if err := c.WritePacket(c.ctx, dd); err != nil {
 		return err
 	}
 

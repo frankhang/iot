@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"github.com/frankhang/util/errors"
+	"github.com/frankhang/util/logutil"
 	"github.com/frankhang/util/tcp"
+	"go.uber.org/zap"
 	"io"
 )
 
@@ -20,7 +24,7 @@ func NewTierPacketIO(packetIO *tcp.PacketIO, driver *TireDriver) *TierPacketIO {
 	}
 }
 
-func (p *TierPacketIO) ReadPacket() ([]byte, error) {
+func (p *TierPacketIO) ReadPacket(ctx context.Context) ([]byte, error) {
 	var header [9]byte
 
 	p.SetReadTimeout()
@@ -33,7 +37,12 @@ func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 	//fmt.Printf("header9: %s\n", hex.EncodeToString(header[:]))
 	length := int(uint8(header[6]))
 
-	//println("length: ", length)
+	//ctx = logutil.WithKeyValue(ctx, "length in header", strconv.Itoa(length))
+	logutil.Logger(ctx).Debug("ReadPacket",
+		zap.Int("lengthInHeader", length),
+		zap.String("header", fmt.Sprintf("%x", header)),
+	)
+
 
 	//buf := make([]byte, length-8)
 	buf := p.Alloc.AllocWithLen(length-9, length-9)
@@ -55,7 +64,7 @@ func (p *TierPacketIO) ReadPacket() ([]byte, error) {
 
 }
 
-func (p *TierPacketIO) WritePacket(data []byte) error {
+func (p *TierPacketIO) WritePacket(ctx context.Context, data []byte) error {
 
 	if n, err := p.Write(data); err != nil {
 		errors.Log(errors.Trace(err))

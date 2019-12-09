@@ -50,30 +50,16 @@ const (
 	nmConfig           = "config"
 	nmConfigCheck      = "config-check"
 	nmConfigStrict     = "config-strict"
-	nmStore            = "store"
-	nmStorePath        = "path"
 	nmHost             = "host"
-	nmAdvertiseAddress = "advertise-address"
 	nmPort             = "P"
-	nmCors             = "cors"
-	nmSocket           = "socket"
-	nmEnableBinlog     = "enable-binlog"
-	nmRunDDL           = "run-ddl"
 	nmLogLevel         = "L"
 	nmLogFile          = "log-file"
-	nmLogSlowQuery     = "log-slow-query"
 	nmReportStatus     = "report-status"
 	nmStatusHost       = "status-host"
 	nmStatusPort       = "status"
 	nmMetricsAddr      = "metrics-addr"
 	nmMetricsInterval  = "metrics-interval"
-	nmDdlLease         = "lease"
 	nmTokenLimit       = "token-limit"
-	nmPluginDir        = "plugin-dir"
-	nmPluginLoad       = "plugin-load"
-
-	nmProxyProtocolNetworks      = "proxy-protocol-networks"
-	nmProxyProtocolHeaderTimeout = "proxy-protocol-header-timeout"
 	nmAffinityCPU                = "affinity-cpus"
 )
 
@@ -84,36 +70,23 @@ var (
 	configStrict = flagBoolean(nmConfigStrict, false, "enforce config file validity")
 
 	// Base
-	store            = flag.String(nmStore, "mocktikv", "registered store name, [tikv, mocktikv]")
-	storePath        = flag.String(nmStorePath, "/tmp/tidb", "tidb storage path")
-	host             = flag.String(nmHost, "0.0.0.0", "tidb server host")
-	advertiseAddress = flag.String(nmAdvertiseAddress, "", "tidb server advertise IP")
-	port             = flag.String(nmPort, "4000", "tidb server port")
-	cors             = flag.String(nmCors, "", "tidb server allow cors origin")
-	socket           = flag.String(nmSocket, "", "The socket file to use for connection.")
-	enableBinlog     = flagBoolean(nmEnableBinlog, false, "enable generate binlog")
-	runDDL           = flagBoolean(nmRunDDL, true, "run ddl worker on this tidb-server")
-	ddlLease         = flag.String(nmDdlLease, "45s", "schema lease duration, very dangerous to change only if you know what you do")
+
+	host             = flag.String(nmHost, "0.0.0.0", "server host")
+	port             = flag.String(nmPort, "4000", "server port")
 	tokenLimit       = flag.Int(nmTokenLimit, 1000, "the limit of concurrent executed sessions")
-	pluginDir        = flag.String(nmPluginDir, "/data/deploy/plugin", "the folder that hold plugin")
-	pluginLoad       = flag.String(nmPluginLoad, "", "wait load plugin name(separated by comma)")
 	affinityCPU      = flag.String(nmAffinityCPU, "", "affinity cpu (cpu-no. separated by comma, e.g. 1,2,3)")
 
 	// Log
 	logLevel     = flag.String(nmLogLevel, "info", "log level: info, debug, warn, error, fatal")
 	logFile      = flag.String(nmLogFile, "", "log file path")
-	logSlowQuery = flag.String(nmLogSlowQuery, "", "slow query file path")
 
 	// Status
 	reportStatus    = flagBoolean(nmReportStatus, true, "If enable status report HTTP service.")
-	statusHost      = flag.String(nmStatusHost, "0.0.0.0", "tidb server status host")
-	statusPort      = flag.String(nmStatusPort, "10080", "tidb server status port")
+	statusHost      = flag.String(nmStatusHost, "0.0.0.0", "server status host")
+	statusPort      = flag.String(nmStatusPort, "10080", "server status port")
 	metricsAddr     = flag.String(nmMetricsAddr, "", "prometheus pushgateway address, leaves it empty will disable prometheus push.")
 	metricsInterval = flag.Uint(nmMetricsInterval, 15, "prometheus client push interval in second, set \"0\" to disable prometheus push.")
 
-	// PROXY Protocol
-	proxyProtocolNetworks      = flag.String(nmProxyProtocolNetworks, "", "proxy protocol networks allowed IP or *, empty mean disable proxy protocol support")
-	proxyProtocolHeaderTimeout = flag.Uint(nmProxyProtocolHeaderTimeout, 5, "proxy protocol header read timeout, unit is second.")
 )
 
 var (
@@ -135,7 +108,7 @@ var hotReloadConfigItems = []string{"Performance.MaxProcs", "Performance.MaxMemo
 func main() {
 	flag.Parse()
 	if *version {
-		//fmt.Println(printer.GetTiDBInfo())
+		//fmt.Println(printer.Get...Info())
 		os.Exit(0)
 	}
 
@@ -224,8 +197,8 @@ func pushMetric(addr string, interval time.Duration) {
 
 // prometheusPushClient pushes metrics to Prometheus Pushgateway.
 func prometheusPushClient(addr string, interval time.Duration) {
-	// TODO: TiDB do not have uniq name, so we use host+port to compose a name.
-	job := "tidb"
+	// TODO: do not have uniq name, so we use host+port to compose a name.
+	job := "iot"
 	pusher := push.New(addr, job)
 	pusher = pusher.Gatherer(prometheus.DefaultGatherer)
 	pusher = pusher.Grouping("instance", instanceName())
@@ -296,7 +269,7 @@ func printInfo() {
 	// Make sure the info is always printed.
 	level := log.GetLevel()
 	log.SetLevel(zap.InfoLevel)
-	//printer.PrintTiDBInfo()
+	//printer.Print...Info()
 	log.SetLevel(level)
 }
 
@@ -346,7 +319,7 @@ func updateCPUUsageMetrics() {
 
 func setupTracing() {
 	tracingCfg := cfg.OpenTracing.ToTracingConfig()
-	tracer, _, err := tracingCfg.New("TiDB")
+	tracer, _, err := tracingCfg.New("iot")
 	if err != nil {
 		log.Fatal("setup jaeger tracer failed", zap.String("error message", err.Error()))
 	}
@@ -421,7 +394,7 @@ func loadConfig() string {
 				return err.Error()
 			}
 			// This block is to accommodate an interim situation where strict config checking
-			// is not the default behavior of TiDB. The warning message must be deferred until
+			// is not the default behavior of server. The warning message must be deferred until
 			// logging has been set up. After strict config checking is the default behavior,
 			// This should all be removed.
 			if !*configCheck && !*configStrict {
@@ -450,9 +423,6 @@ func overrideConfig() {
 	if actualFlags[nmHost] {
 		cfg.Host = *host
 	}
-	if actualFlags[nmAdvertiseAddress] {
-		cfg.AdvertiseAddress = *advertiseAddress
-	}
 	if len(cfg.AdvertiseAddress) == 0 {
 		cfg.AdvertiseAddress = cfg.Host
 	}
@@ -463,36 +433,9 @@ func overrideConfig() {
 		errors.MustNil(err)
 		cfg.Port = uint(p)
 	}
-	if actualFlags[nmCors] {
-		fmt.Println(cors)
-		cfg.Cors = *cors
-	}
-	if actualFlags[nmStore] {
-		cfg.Store = *store
-	}
-	if actualFlags[nmStorePath] {
-		cfg.Path = *storePath
-	}
-	if actualFlags[nmSocket] {
-		cfg.Socket = *socket
-	}
-	if actualFlags[nmEnableBinlog] {
-		cfg.Binlog.Enable = *enableBinlog
-	}
-	if actualFlags[nmRunDDL] {
-		cfg.RunDDL = *runDDL
-	}
-	if actualFlags[nmDdlLease] {
-		cfg.Lease = *ddlLease
-	}
+
 	if actualFlags[nmTokenLimit] {
 		cfg.TokenLimit = uint(*tokenLimit)
-	}
-	if actualFlags[nmPluginLoad] {
-		cfg.Plugin.Load = *pluginLoad
-	}
-	if actualFlags[nmPluginDir] {
-		cfg.Plugin.Dir = *pluginDir
 	}
 
 	// Log
@@ -501,9 +444,6 @@ func overrideConfig() {
 	}
 	if actualFlags[nmLogFile] {
 		cfg.Log.File.Filename = *logFile
-	}
-	if actualFlags[nmLogSlowQuery] {
-		cfg.Log.SlowQueryFile = *logSlowQuery
 	}
 
 	// Status
@@ -526,11 +466,5 @@ func overrideConfig() {
 		cfg.Status.MetricsInterval = *metricsInterval
 	}
 
-	// PROXY Protocol
-	if actualFlags[nmProxyProtocolNetworks] {
-		cfg.ProxyProtocol.Networks = *proxyProtocolNetworks
-	}
-	if actualFlags[nmProxyProtocolHeaderTimeout] {
-		cfg.ProxyProtocol.HeaderTimeout = *proxyProtocolHeaderTimeout
-	}
+
 }
