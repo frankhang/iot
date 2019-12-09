@@ -12,7 +12,7 @@ level = "debug"
     #Log filename, leave empty to disable file log.
     filename = "tire.log"
 
-    #Max size for a single file, in MB.
+    #Max size for a single file, in MB and cannot be large than 4096MB
     max-size = 10
 
     #Max log keep days, default is never deleting.
