@@ -4,14 +4,21 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/frankhang/util/arena"
+	"github.com/frankhang/util/hack"
+	"github.com/frankhang/util/util"
 	"io"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 )
 
 const (
 	defaultReaderSize = 4096
 	defaultWriterSize = 4096
+
+	sizeHeader = 27
+	locSize    = 18
 )
 
 
@@ -38,8 +45,8 @@ var (
 
 func main() {
 
-	//conn, err := net.Dial("tcp", "iot.cectiy.com:10001")
-	conn, err := net.Dial("tcp", "localhost:10001")
+	conn, err := net.Dial("tcp", "iot.cectiy.com:10001")
+	//conn, err := net.Dial("tcp", "localhost:10001")
 	if err != nil {
 		fmt.Println("check server")
 		return
@@ -54,26 +61,25 @@ func main() {
 	//s := []byte("abc")
 	//conn.Write(s)
 
-	h := []byte{0x55, 0xAA, 0xAA, 0xBB, 0xEE, 0xEE}
+	h := []byte{0x35, 0x35, 0x20, 0x41, 0x41, 0x20, 0x39, 0x30, 0x20, 0x38, 0x39, 0x20, 0x30, 0x33, 0x20, 0x30, 0x34, 0x20}
 
-	//fmt.Printf("h： %s\n", hex.EncodeToString(h))
-	if _, err = bufWriter.Write(h); err != nil {
-		println("write h error:", err)
-		return
-	}
+	size := len(h) + 3*4 + 9*2
+	println("size = ", size)
 
-	dd := alloc.Alloc(3 + 3 + 1)
-	dd = append(dd, byte(9 + 3 + 1)) //length
-	dd = append(dd, byte(1)) //tire number
-	dd = append(dd, byte(1)) //user id
+	dd := alloc.Alloc(size)
 
-	//tier information
-	dd  = append(dd, 0x32)
-	dd  = append(dd, byte(1)) //temperature
-	dd  = append(dd, byte(1)) //pressure
+	dd = append(dd, h...)
+	dd = append(dd, hack.Slice(fmt.Sprintf("%-3d", size))...) //size
+	dd = append(dd, hack.Slice(fmt.Sprintf("%-3d", 2))...)   //tire number
+	dd = append(dd, 0x30, 0x31, 0x20) //user id
+	dd = append(dd, 0x31, 0x31, 0x20, 0x30, 0x30, 0x20, 0x30, 0x30, 0x20)// data of first tire
+	dd = append(dd, 0x31, 0x32, 0x20, 0x30, 0x31, 0x20, 0x30, 0x30, 0x20)// data of second tire
 
-	//check sum
-	dd = append(dd, 0xff)
+
+	sum := util.Sum(dd)
+	dd = append(dd, hack.Slice(fmt.Sprintf("%3d", sum))...) //check sum
+
+	fmt.Printf("packet = [%x]\n", dd)
 
 	//fmt.Printf("dd： %s\n", hex.EncodeToString(dd))
 	if _, err = bufWriter.Write(dd); err != nil {
@@ -85,23 +91,35 @@ func main() {
 
 	//Read packet from server
 
-	var header [9]byte
+	var header [sizeHeader]byte
 
 	waitTimeout := time.Duration(3 * time.Second)
 
 	if err := bufReadConn.SetReadDeadline(time.Now().Add(waitTimeout)); err != nil {
-		//fmt.Printf("SetReadDeadline error: %s", err)
+		fmt.Printf("SetReadDeadline error: %v\n", err)
 		return
 	}
 
 	if _, err := io.ReadFull(bufReadConn, header[:]); err != nil {
-		fmt.Printf("read head error: %v", err)
+		fmt.Printf("read head error: %v\n", err)
 		return
 	}
 
 	fmt.Printf("read header: [%x].\n", header)
 
-	//length := int(header[6])
+	s := hack.String(header[locSize : locSize+3])
+	if size, err = strconv.Atoi(strings.TrimSpace(s)); err != nil {
+		fmt.Printf("get size error: %v\n", err)
+		return
+	}
+
+	data := alloc.AllocWithLen(size -sizeHeader, size -sizeHeader)
+	if _, err := io.ReadFull(bufReadConn, data); err != nil {
+		fmt.Printf("read head error: %s", err)
+		return
+	}
+
+	fmt.Printf("read data: [%x].\n", data)
 
 
 	tireNum := int(header[7])
@@ -114,16 +132,6 @@ func main() {
 		fmt.Printf("SetReadDeadline error: %s\n", err)
 		return
 	}
-
-	var checksum [1]byte
-
-	if _, err := io.ReadFull(bufReadConn, checksum[:]); err != nil {
-		fmt.Printf("read head error: %s", err)
-		return
-	}
-
-	fmt.Printf("read sum: [%x].\n", checksum[:])
-
 
 	bufReadConn.Close()
 

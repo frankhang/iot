@@ -38,15 +38,17 @@ func (p *TierPacketIO) ReadPacket(ctx context.Context) (header []byte, data []by
 	header = p.Alloc.AllocWithLen(sizeHead, sizeHead)
 	p.SetReadTimeout()
 	if _, err = io.ReadFull(p.BufReadConn, header[:]); err != nil {
-		return
+		return nil, nil, errors.Trace(err)
 	}
 
-	if size, err = strconv.Atoi(hack.String(header[locSize : locSize+3])); err != nil {
-		return
+	//locStr := strings.TrimSpace(hack.String(header[locSize : locSize+3]))
+	locStr := hack.String(header[locSize : locSize+2])
+	if size, err = strconv.Atoi(locStr); err != nil {
+		return nil, nil, errors.Trace(err)
 	}
 
 	logutil.Logger(ctx).Debug("ReadPacket",
-		zap.Int("lengthInHeader", size),
+		zap.Int("sizeInHeader", size),
 		zap.String("header", fmt.Sprintf("%x", header)),
 	)
 
@@ -54,7 +56,7 @@ func (p *TierPacketIO) ReadPacket(ctx context.Context) (header []byte, data []by
 
 	p.SetReadTimeout()
 	if _, err = io.ReadFull(p.BufReadConn, data); err != nil {
-		return
+		return nil, nil, errors.Trace(err)
 	}
 
 	return
@@ -62,11 +64,13 @@ func (p *TierPacketIO) ReadPacket(ctx context.Context) (header []byte, data []by
 
 func (p *TierPacketIO) WritePacket(ctx context.Context, data []byte) error {
 
-	if _, err := p.Write(data); err != nil {
-		errors.Log(err)
-		return errors.ErrBadConn.GenWithStackByArgs(p.ConnectionID)
-	} else {
-		return nil
-	}
+	//if _, err := p.Write(data); err != nil {
+	//	//errors.Log(err)
+	//	return errors.ErrBadConn.GenWithStackByArgs(p.ConnectionID)
+	//} else {
+	//	return nil
+	//}
+	_, err := p.Write(data)
+	return errors.Trace(err)
 
 }

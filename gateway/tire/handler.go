@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"github.com/frankhang/util/errors"
 	"github.com/frankhang/util/hack"
 	"github.com/frankhang/util/logutil"
 	"github.com/frankhang/util/tcp"
 	"github.com/frankhang/util/util"
-	"strconv"
+	"go.uber.org/zap"
 )
 
 //tierHandler implements Hanlder
@@ -32,17 +34,27 @@ func (th *TierHandler) Handle(ctx context.Context, cc *tcp.ClientConn, header []
 	sum := util.Sum(header)
 	sum += util.Sum(data[:len(data)-3])
 
-	ctx = logutil.WithKeyValue(ctx, "sum", strconv.Itoa(sum))
+	//ctx = logutil.WithInt(ctx, "length", len(header)+len(data))
+	//ctx = logutil.WithString(ctx, "packet", fmt.Sprintf("%x%x", header, data))
+	//ctx = logutil.WithInt(ctx, "sum", sum)
+
+	logutil.Logger(ctx).Debug("Packet received",
+		zap.Int("size", len(header)+len(data)),
+		zap.String("packet", fmt.Sprintf("%x%x", header, data)),
+		zap.Int("sum", sum),
+	)
 
 	cmd := hack.String(header[:2])
 	//dispach cmd process logic to controller
 	switch cmd {
 	case "55":
-		ctl.ctx = logutil.WithKeyValue(ctx, "method", "TirePressureReport")
-		return ctl.TirePressureReport(header, data)
+		ctl.ctx = logutil.WithString(ctx, "method", "TirePressureReport")
+		err := ctl.TirePressureReport(header, data)
+		return errors.Trace(err)
 	case "57":
-		ctl.ctx = logutil.WithKeyValue(ctx, "method", "TireReplaceAck")
-		return ctl.TireReplaceAck(header, data)
+		ctl.ctx = logutil.WithString(ctx, "method", "TireReplaceAck")
+		err := ctl.TireReplaceAck(header, data)
+		return errors.Trace(err)
 	}
 
 	logutil.Logger(ctx).Warn("no controller method found")
