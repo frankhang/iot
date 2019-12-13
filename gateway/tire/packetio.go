@@ -61,16 +61,3 @@ func (p *TierPacketIO) ReadPacket(ctx context.Context) (header []byte, data []by
 
 	return
 }
-
-func (p *TierPacketIO) WritePacket(ctx context.Context, data []byte) error {
-
-	//if _, err := p.Write(data); err != nil {
-	//	//errors.Log(err)
-	//	return errors.ErrBadConn.GenWithStackByArgs(p.ConnectionID)
-	//} else {
-	//	return nil
-	//}
-	_, err := p.Write(data)
-	return errors.Trace(err)
-
-}
