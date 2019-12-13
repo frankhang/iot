@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"github.com/frankhang/util/arena"
 	"github.com/frankhang/util/hack"
@@ -41,12 +42,16 @@ func (conn *bufferedReadConn) Read(b []byte) (n int, err error) {
 
 var (
 //bufio.NewWriterSize(p.BufReadConn, defaultWriterSize)
+	url   = flag.String("url", "localhost:10001", "host:port")
 )
 
 func main() {
 
-	conn, err := net.Dial("tcp", "iot.cectiy.com:10001")
-	//conn, err := net.Dial("tcp", "localhost:10001")
+	flag.Parse()
+
+	//conn, err := net.Dial("tcp", "iot.cectiy.com:10001")
+	println("connecting : " + *url)
+	conn, err := net.Dial("tcp", *url)
 	if err != nil {
 		fmt.Println("check server")
 		return
