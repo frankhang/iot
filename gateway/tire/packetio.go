@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -41,9 +42,8 @@ func (p *TierPacketIO) ReadPacket(ctx context.Context) (header []byte, data []by
 		return nil, nil, errors.Trace(err)
 	}
 
-	//locStr := strings.TrimSpace(hack.String(header[locSize : locSize+3]))
-	locStr := hack.String(header[locSize : locSize+2])
-	if size, err = strconv.Atoi(locStr); err != nil {
+	s := hack.String(header[locSize : locSize+3])
+	if size, err = strconv.Atoi(strings.TrimSpace(s)); err != nil {
 		return nil, nil, errors.Trace(err)
 	}
 
@@ -52,11 +52,14 @@ func (p *TierPacketIO) ReadPacket(ctx context.Context) (header []byte, data []by
 		zap.String("header", fmt.Sprintf("%x", header)),
 	)
 
-	data = p.Alloc.AllocWithLen(size-sizeHead, size-sizeHead)
+	if size > sizeHead {
+		data = p.Alloc.AllocWithLen(size-sizeHead, size-sizeHead)
 
-	p.SetReadTimeout()
-	if _, err = io.ReadFull(p.BufReadConn, data); err != nil {
-		return nil, nil, errors.Trace(err)
+		p.SetReadTimeout()
+		if _, err = io.ReadFull(p.BufReadConn, data); err != nil {
+			return nil, nil, errors.Trace(err)
+		}
+
 	}
 
 	return

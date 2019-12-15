@@ -52,27 +52,30 @@ func (c *Controller) TirePressureReport(header []byte, data []byte) error {
 
 	logutil.Logger(ctx).Info("controller")
 
-	loc := 0
-	for i := 0; i < tireNum; i++ {
-		tireName := "T" + strconv.Itoa(i)
-		s = hack.String(data[loc : loc+3])
-		tireLoc, err := strconv.Atoi(strings.TrimSpace(s))
-		errors.MustNil(errors.Trace(err))
-		c := logutil.WithInt(c.ctx, "loc", tireLoc)
+	if len(data) >= 3 {
+		loc := 0
+		for i := 0; i < tireNum; i++ {
+			tireName := "T" + strconv.Itoa(i)
+			s = hack.String(data[loc : loc+3])
+			tireLoc, err := strconv.Atoi(strings.TrimSpace(s))
+			errors.MustNil(errors.Trace(err))
+			c := logutil.WithInt(c.ctx, "loc", tireLoc)
 
-		s = hack.String(data[loc+3 : loc+3+3])
-		tirePressure, err := strconv.Atoi(strings.TrimSpace(s))
-		errors.MustNil(errors.Trace(err))
-		c = logutil.WithInt(c, "pressure", tirePressure)
+			s = hack.String(data[loc+3 : loc+3+3])
+			tirePressure, err := strconv.Atoi(strings.TrimSpace(s))
+			errors.MustNil(errors.Trace(err))
+			c = logutil.WithInt(c, "pressure", tirePressure)
 
-		s = hack.String(data[loc+6 : loc+6+3])
-		tireTemperature, err := strconv.Atoi(strings.TrimSpace(s))
-		errors.MustNil(errors.Trace(err))
-		c = logutil.WithInt(c, "temperature", tireTemperature)
+			s = hack.String(data[loc+6 : loc+6+3])
+			tireTemperature, err := strconv.Atoi(strings.TrimSpace(s))
+			errors.MustNil(errors.Trace(err))
+			c = logutil.WithInt(c, "temperature", tireTemperature)
 
-		logutil.Logger(c).Debug(tireName)
+			logutil.Logger(c).Debug(tireName)
 
-		loc+=9
+			loc += 9
+		}
+
 	}
 
 	h := []byte{0x35, 0x36, 0x20, 0x41, 0x41, 0x20, 0x39, 0x30, 0x20, 0x38, 0x43, 0x20, 0x30, 0x33, 0x20, 0x30, 0x34, 0x20}
@@ -81,7 +84,7 @@ func (c *Controller) TirePressureReport(header []byte, data []byte) error {
 	dd := c.Alloc.Alloc(size)
 	dd = append(dd, h...)
 	dd = append(dd, hack.Slice(fmt.Sprintf("%-3d", size))...) //size
-	dd = append(dd, hack.Slice(fmt.Sprintf("%-3d", 0))...)   //tire number
+	dd = append(dd, hack.Slice(fmt.Sprintf("%-3d", 0))...)    //tire number
 	dd = append(dd, 0x30, 0x31, 0x20)                         //user id
 
 	sum := util.Sum(dd)

@@ -32,7 +32,9 @@ func (th *TierHandler) Handle(ctx context.Context, cc *tcp.ClientConn, header []
 	ctl.cc = cc
 
 	sum := util.Sum(header)
-	sum += util.Sum(data[:len(data)-3])
+	if len(data) >= 3 {
+		sum += util.Sum(data[:len(data)-3])
+	}
 
 	//ctx = logutil.WithInt(ctx, "length", len(header)+len(data))
 	//ctx = logutil.WithString(ctx, "packet", fmt.Sprintf("%x%x", header, data))
