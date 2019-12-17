@@ -42,14 +42,17 @@ func (p *TierPacketIO) ReadPacket(ctx context.Context) (header []byte, data []by
 		return nil, nil, errors.Trace(err)
 	}
 
+	logutil.Logger(ctx).Debug("ReadPacket",
+		zap.String("header", fmt.Sprintf("%x", header)),
+	)
+
 	s := hack.String(header[locSize : locSize+3])
 	if size, err = strconv.Atoi(strings.TrimSpace(s)); err != nil {
 		return nil, nil, errors.Trace(err)
 	}
 
 	logutil.Logger(ctx).Debug("ReadPacket",
-		zap.Int("sizeInHeader", size),
-		zap.String("header", fmt.Sprintf("%x", header)),
+		zap.Int("size", size),
 	)
 
 	if size > sizeHead {
