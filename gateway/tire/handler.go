@@ -44,6 +44,7 @@ func (th *TierHandler) Handle(ctx context.Context, cc *tcp.ClientConn, header []
 		zap.Int("size", len(header)+len(data)),
 		zap.String("packet", fmt.Sprintf("%x%x", header, data)),
 		zap.Int("sum", sum),
+		zap.String("packetStr", fmt.Sprintf("%s%s", header, data)),
 	)
 
 	cmd := hack.String(header[:2])

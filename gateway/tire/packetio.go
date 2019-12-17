@@ -44,6 +44,7 @@ func (p *TierPacketIO) ReadPacket(ctx context.Context) (header []byte, data []by
 
 	logutil.Logger(ctx).Debug("ReadPacket",
 		zap.String("header", fmt.Sprintf("%x", header)),
+		zap.String("headerStr", fmt.Sprintf("%s", header)),
 	)
 
 	s := hack.String(header[locSize : locSize+3])
