@@ -82,9 +82,13 @@ func main() {
 
 
 	sum := util.Sum(dd)
-	dd = append(dd, hack.Slice(fmt.Sprintf("%3d", sum))...) //check sum
+	fmt.Printf("sum = [%3d]\n", sum)
+	//dd = append(dd, hack.Slice(fmt.Sprintf("%3d", sum))...) //check sum
+	dd = append(dd, hack.Slice(fmt.Sprintf("%3d", 0))...) //check sum
+
 
 	fmt.Printf("packet = [%x]\n", dd)
+	fmt.Printf("packetStr = [%s]\n", dd)
 
 	//fmt.Printf("dd： %s\n", hex.EncodeToString(dd))
 	if _, err = bufWriter.Write(dd); err != nil {

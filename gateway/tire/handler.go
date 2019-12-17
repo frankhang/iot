@@ -28,13 +28,20 @@ func NewTierHandler(tierPacketIO *TierPacketIO, driver *TireDriver) *TierHandler
 
 func (th *TierHandler) Handle(ctx context.Context, cc *tcp.ClientConn, header []byte, data []byte) error {
 
+	fmt.Printf("header:[%s]\n", header)
+	fmt.Printf("data:[%s]\n", data)
 	ctl := th.ctl
 	ctl.cc = cc
 
 	sum := util.Sum(header)
+	ssum := util.SignedSum(header)
+
 	if len(data) >= 3 {
 		sum += util.Sum(data[:len(data)-3])
+		ssum += util.SignedSum(data[:len(data)-3])
 	}
+
+	fmt.Printf("sum=%d, ssum=%d\n", sum, ssum)
 
 	//ctx = logutil.WithInt(ctx, "length", len(header)+len(data))
 	//ctx = logutil.WithString(ctx, "packet", fmt.Sprintf("%x%x", header, data))
@@ -44,6 +51,7 @@ func (th *TierHandler) Handle(ctx context.Context, cc *tcp.ClientConn, header []
 		zap.Int("size", len(header)+len(data)),
 		zap.String("packet", fmt.Sprintf("%x%x", header, data)),
 		zap.Int("sum", sum),
+		zap.Int("ssum", ssum),
 		zap.String("packetStr", fmt.Sprintf("%s%s", header, data)),
 	)
 

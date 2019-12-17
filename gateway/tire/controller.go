@@ -7,7 +7,6 @@ import (
 	"github.com/frankhang/util/hack"
 	"github.com/frankhang/util/logutil"
 	"github.com/frankhang/util/tcp"
-	"github.com/frankhang/util/util"
 	"go.uber.org/zap"
 	"strconv"
 	"strings"
@@ -55,6 +54,10 @@ func (c *Controller) TirePressureReport(header []byte, data []byte) error {
 	if len(data) >= 3 {
 		loc := 0
 		for i := 0; i < tireNum; i++ {
+			if data[loc] == 0 && data[loc+1] == 0 {
+				break
+			}
+
 			tireName := "T" + strconv.Itoa(i)
 			s = hack.String(data[loc : loc+3])
 			tireLoc, err := strconv.Atoi(strings.TrimSpace(s))
@@ -87,8 +90,9 @@ func (c *Controller) TirePressureReport(header []byte, data []byte) error {
 	dd = append(dd, hack.Slice(fmt.Sprintf("%-3d", 0))...)    //tire number
 	dd = append(dd, 0x30, 0x31, 0x20)                         //user id
 
-	sum := util.Sum(dd)
-	dd = append(dd, hack.Slice(fmt.Sprintf("%3d", sum))...) //check sum
+	//sum := util.Sum(dd)
+	dd = append(dd, hack.Slice(fmt.Sprintf("%3d", 0))...) //check sum
+	//dd = append(dd, hack.Slice(fmt.Sprintf("%3d", sum))...) //check sum
 
 	logutil.Logger(c.ctx).Info("controller ack",
 		zap.Int("size", size),
