@@ -7,6 +7,7 @@ import (
 	"github.com/frankhang/util/hack"
 	"github.com/frankhang/util/logutil"
 	"github.com/frankhang/util/tcp"
+	l "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 	"io"
 	"strconv"
@@ -42,19 +43,25 @@ func (p *TierPacketIO) ReadPacket(ctx context.Context) (header []byte, data []by
 		return nil, nil, errors.Trace(err)
 	}
 
-	logutil.Logger(ctx).Debug("ReadPacket",
-		zap.String("header", fmt.Sprintf("%x", header)),
-		zap.String("headerStr", fmt.Sprintf("%s", header)),
-	)
+	if l.GetLevel() >= l.DebugLevel {
+		logutil.Logger(ctx).Debug("ReadPacket",
+			zap.String("header", fmt.Sprintf("%x", header)),
+			zap.String("headerStr", fmt.Sprintf("%s", header)),
+		)
+
+	}
 
 	s := hack.String(header[locSize : locSize+3])
 	if size, err = strconv.Atoi(strings.TrimSpace(s)); err != nil {
 		return nil, nil, errors.Trace(err)
 	}
 
-	logutil.Logger(ctx).Debug("ReadPacket",
-		zap.Int("size", size),
-	)
+	if l.GetLevel() >= l.DebugLevel {
+		logutil.Logger(ctx).Debug("ReadPacket",
+			zap.Int("size", size),
+		)
+
+	}
 
 	if size > sizeHead {
 		data = p.Alloc.AllocWithLen(size-sizeHead, size-sizeHead)

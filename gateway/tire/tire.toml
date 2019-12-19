@@ -4,7 +4,7 @@ token-limit = 1000
 read-timeout = 3
 
 [log]
-level = "debug"
+level = "info"
 
     #file log related config.
     [log.file]

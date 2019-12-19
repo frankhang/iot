@@ -8,6 +8,7 @@ import (
 	"github.com/frankhang/util/logutil"
 	"github.com/frankhang/util/tcp"
 	"github.com/frankhang/util/util"
+	l "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 )
 
@@ -43,13 +44,15 @@ func (th *TierHandler) Handle(ctx context.Context, cc *tcp.ClientConn, header []
 	//ctx = logutil.WithString(ctx, "packet", fmt.Sprintf("%x%x", header, data))
 	//ctx = logutil.WithInt(ctx, "sum", sum)
 
-	logutil.Logger(ctx).Debug("Packet received",
-		zap.Int("size", len(header)+len(data)),
-		zap.String("packet", fmt.Sprintf("%x%x", header, data)),
-		zap.Int("sum", sum),
-		zap.Int("ssum", ssum),
-		zap.String("packetStr", fmt.Sprintf("%s%s", header, data)),
-	)
+	if l.GetLevel() >= l.DebugLevel {
+		logutil.Logger(ctx).Debug("Packet received",
+			zap.Int("size", len(header)+len(data)),
+			zap.String("packet", fmt.Sprintf("%x%x", header, data)),
+			zap.Int("sum", sum),
+			zap.Int("ssum", ssum),
+			zap.String("packetStr", fmt.Sprintf("%s%s", header, data)),
+		)
+	}
 
 	cmd := hack.String(header[:2])
 	//dispach cmd process logic to controller
