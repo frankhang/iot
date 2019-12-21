@@ -303,7 +303,7 @@ func updateCPUUsageMetrics() {
 
 func setupTracing() {
 	tracingCfg := cfg.OpenTracing.ToTracingConfig()
-	tracer, _, err := tracingCfg.New("iot")
+	tracer, _, err := tracingCfg.New("tire")
 	if err != nil {
 		log.Fatal("setup jaeger tracer failed", zap.String("error message", err.Error()))
 	}
