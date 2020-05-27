@@ -10,7 +10,6 @@ import (
 	"github.com/frankhang/util/util"
 	l "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
-
 )
 
 //tierHandler implements Hanlder
@@ -44,7 +43,6 @@ func (th *Handler) Handle(ctx context.Context, cc *tcp.ClientConn, header []byte
 	crc := util.Crc16(data[:ss])
 	expectedCrc := binary.BigEndian.Uint16(data[ss:])
 
-
 	//ctx = logutil.WithInt(ctx, "length", len(header)+len(data))
 	//ctx = logutil.WithString(ctx, "packet", fmt.Sprintf("%x%x", header, data))
 	//ctx = logutil.WithInt(ctx, "sum", sum)
@@ -64,19 +62,34 @@ func (th *Handler) Handle(ctx context.Context, cc *tcp.ClientConn, header []byte
 		return
 	}
 
-	//cmd := hack.String(header[:2])
-	////dispach cmd process logic to controller
-	//switch cmd {
-	//case "55":
-	//	ctl.ctx = logutil.WithString(ctx, "method", "TirePressureReport")
-	//	err := ctl.TirePressureReport(header, data)
-	//	return errors.Trace(err)
-	//case "57":
-	//	ctl.ctx = logutil.WithString(ctx, "method", "TireReplaceAck")
-	//	err := ctl.TireReplaceAck(header, data)
-	//	return errors.Trace(err)
-	//}
-	//
-	//logutil.Logger(ctx).Warn("no controller method found")
+	if data[0] == '(' {
+		switch data[3] {
+		case 'h':
+			ctl.ctx = logutil.WithString(ctx, "method", "Protocol1")
+			err := ctl.Protocol1(header, data)
+			return errors.Trace(err)
+		case 'c':
+			ctl.ctx = logutil.WithString(ctx, "method", "Protocol2")
+			err := ctl.Protocol2(header, data)
+			return errors.Trace(err)
+		case 'S':
+			ctl.ctx = logutil.WithString(ctx, "method", "Protocol3")
+			err := ctl.Protocol3(header, data)
+			return errors.Trace(err)
+		case 'r':
+			ctl.ctx = logutil.WithString(ctx, "method", "Protocol4")
+			err := ctl.Protocol4(header, data)
+			return errors.Trace(err)
+		default:
+			logutil.Logger(ctx).Warn("no controller method found")
+		}
+
+	} else {
+		ctl.ctx = logutil.WithString(ctx, "method", "Data1")
+		err := ctl.Data1(header, data)
+		return errors.Trace(err)
+
+	}
+
 	return nil
 }

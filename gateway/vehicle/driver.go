@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"github.com/frankhang/util/config"
 	"github.com/frankhang/util/tcp"
 )

@@ -15,11 +15,7 @@ import (
 const (
 	defaultReaderSize = 4096
 	defaultWriterSize = 4096
-
-
 )
-
-
 
 type bufferedReadConn struct {
 	net.Conn
@@ -36,10 +32,9 @@ func (conn *bufferedReadConn) Read(b []byte) (n int, err error) {
 	return conn.rb.Read(b)
 }
 
-
 var (
-//bufio.NewWriterSize(p.BufReadConn, defaultWriterSize)
-	url   = flag.String("url", "localhost:10002", "host:port")
+	//bufio.NewWriterSize(p.BufReadConn, defaultWriterSize)
+	url = flag.String("url", "localhost:10002", "host:port")
 )
 
 func main() {
@@ -63,7 +58,7 @@ func main() {
 	//s := []byte("abc")
 	//conn.Write(s)
 
-	dd:= []string{
+	dd := []string{
 		"(evh00)",
 		"(evc1100)",
 		"(evS100)",
@@ -84,34 +79,93 @@ func main() {
 		}
 
 		bufWriter.Flush()
-
-	}
-
-	waitTimeout := time.Duration(3 * time.Second)
-
-	if err := bufReadConn.SetReadDeadline(time.Now().Add(waitTimeout)); err != nil {
-		fmt.Printf("SetReadDeadline error: %v\n", err)
-		return
-	}
-
-	println("Reading...")
-	var d [1]byte
-	for {
-		if _, err := io.ReadFull(bufReadConn, d[:]); err != nil {
-			fmt.Printf("ReadFull error: %v\n", err)
-			return
+		if d[0] == '(' {
+			if err = readResponse(bufReadConn, data); err != nil {
+				fmt.Printf("read response error: %s", err)
+				return
+			}
 		}
-		print(d)
 
 	}
 
-
-	bufReadConn.Close()
+	//waitTimeout := time.Duration(10 * time.Second)
+	//
+	//println("Reading...")
+	//var d [1]byte
+	//for {
+	//	if err := bufReadConn.SetReadDeadline(time.Now().Add(waitTimeout)); err != nil {
+	//		fmt.Printf("SetReadDeadline error: %v\n", err)
+	//		return
+	//	}
+	//	if _, err := io.ReadFull(bufReadConn, d[:]); err != nil {
+	//		fmt.Printf("ReadFull error: %v\n", err)
+	//		return
+	//	}
+	//	//print(hack.String(d[:]))
+	//	fmt.Printf("%c", d[0])
+	//
+	//}
 
 }
 
-func createPacket(data []byte) []byte {
+func readResponse(bufReader *bufferedReadConn, request []byte) (err error) {
+	waitTimeout := time.Duration(3 * time.Second)
+
+	var data [7]byte
+
+	if err = bufReader.SetReadDeadline(time.Now().Add(waitTimeout)); err != nil {
+		return
+	}
+	if _, err = io.ReadFull(bufReader, data[:]); err != nil {
+		return
+	}
+	fmt.Printf("readResponse: [%x]\n", data)
+	fmt.Printf("readResponse Str: [%s]\n", data)
+	if data[len(data)-1] != ')' {
+		err = fmt.Errorf("end code should be )")
+		return
+	}
+
+	ss := len(data) - 3
+	crc := util.Crc16(data[:ss])
+	expectedCrc := binary.BigEndian.Uint16(data[ss:])
+
+	if crc != expectedCrc {
+		err = fmt.Errorf("crc check error, %d != %d", crc, expectedCrc)
+		return
+	}
+	fmt.Printf("readResponse: crc =%d\n", crc)
+
+	switch request[3] {
+	case 'h':
+		if data[3] == 'H' {
+			fmt.Printf("***** Get response for protocol 1 *****\n")
+		} else {
+			err = fmt.Errorf("Get err response for protocol 1\n")
+		}
+	case 'c':
+		if data[3] == 'C' {
+			fmt.Printf("***** Get response for protocol 2 *****\n")
+		} else {
+			err = fmt.Errorf("Get err response for protocol 2\n")
+		}
+	case 'S':
+		fmt.Printf("***** Get response for protocol 3 *****\n")
+	case 'r':
+		fmt.Printf("***** Get response for protocol 4 *****\n")
+
+	}
+
+
+	return
+}
+
+func createPacket(d []byte) []byte {
 	var crcLen int
+
+	data := make([]byte, len(d))
+	copy(data, d)
+
 	if data[0] == '(' {
 		crcLen = len(data) - 3
 	} else {
