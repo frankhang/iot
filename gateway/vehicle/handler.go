@@ -56,11 +56,11 @@ func (th *Handler) Handle(ctx context.Context, cc *tcp.ClientConn, header []byte
 			zap.String("packetStr", fmt.Sprintf("%s%s", header, data)),
 		)
 	}
-	if crc != expectedCrc {
-		err = fmt.Errorf("Handle: crc check error, %d != %d, data=[%x]", crc, expectedCrc, data)
-		err = errors.Trace(err)
-		return
-	}
+	//if crc != expectedCrc {
+	//	err = fmt.Errorf("Handle: crc check error, %d != %d, data=[%x]", crc, expectedCrc, data)
+	//	err = errors.Trace(err)
+	//	return
+	//}
 
 	if data[0] == '(' {
 		switch data[3] {

@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"github.com/frankhang/util/errors"
 	"github.com/frankhang/util/tcp"
-	"github.com/frankhang/util/util"
 )
 
 type Controller struct {
@@ -51,7 +50,8 @@ func fillCrc(data []byte) []byte {
 		crcLen = len(data) - 2
 	}
 
-	crc16 := util.Crc16(data[:crcLen])
+	//crc16 := util.Crc16(data[:crcLen])
+	crc16 := uint16(0)
 	binary.BigEndian.PutUint16(data[crcLen:], crc16)
 
 	return data

@@ -6,4 +6,12 @@ go 1.13
 
 //replace github.com/frankhang/iot => /Users/hang/go/src/github.com/frankhang/iot
 
-require github.com/frankhang/util v0.0.0-20200527153227-0650922b80ae
+require (
+	github.com/frankhang/util v0.0.0-20200527153227-0650922b80ae
+	github.com/opentracing/opentracing-go v1.1.0
+	github.com/prometheus/client_golang v1.2.1
+	github.com/sirupsen/logrus v1.4.2
+	github.com/struCoder/pidusage v0.1.3
+	go.uber.org/automaxprocs v1.3.0
+	go.uber.org/zap v1.13.0
+)

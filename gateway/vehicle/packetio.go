@@ -90,7 +90,7 @@ func (p *PacketIO) ReadPacket(ctx context.Context) (header []byte, data []byte, 
 			return
 		}
 		if data[len(data)-1] != ')' {
-			err = fmt.Errorf("ReadPacket: end code shoud be ), data = [%s]", data)
+			err = fmt.Errorf("ReadPacket: end code shoud be 0x29 or ')', data = [%x]， data str = [%s]", data, data)
 			err = errors.Trace(err)
 			return
 		}

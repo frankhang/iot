@@ -59,11 +59,13 @@ func main() {
 	//conn.Write(s)
 
 	dd := []string{
+		"Aev00AAAA00",
 		"(evh00)",
 		"(evc1100)",
+		"Bev00BBBBBBBBBBBBBBBB00",
 		"(evS100)",
 		"(evr00)",
-		"Cev00AAAA00",
+
 	}
 
 	for _, d := range dd {
@@ -128,31 +130,31 @@ func readResponse(bufReader *bufferedReadConn, request []byte) (err error) {
 
 	ss := len(data) - 3
 	crc := util.Crc16(data[:ss])
-	expectedCrc := binary.BigEndian.Uint16(data[ss:])
+	//expectedCrc := binary.BigEndian.Uint16(data[ss:])
 
-	if crc != expectedCrc {
-		err = fmt.Errorf("crc check error, %d != %d", crc, expectedCrc)
-		return
-	}
+	//if crc != expectedCrc {
+	//	err = fmt.Errorf("crc check error, %d != %d", crc, expectedCrc)
+	//	return
+	//}
 	fmt.Printf("readResponse: crc =%d\n", crc)
 
 	switch request[3] {
 	case 'h':
 		if data[3] == 'H' {
-			fmt.Printf("***** Get response for protocol 1 *****\n")
+			fmt.Printf("***** Got response for protocol 1 *****\n")
 		} else {
-			err = fmt.Errorf("Get err response for protocol 1\n")
+			err = fmt.Errorf("Got err response for protocol 1\n")
 		}
 	case 'c':
 		if data[3] == 'C' {
-			fmt.Printf("***** Get response for protocol 2 *****\n")
+			fmt.Printf("***** Got response for protocol 2 *****\n")
 		} else {
-			err = fmt.Errorf("Get err response for protocol 2\n")
+			err = fmt.Errorf("Got err response for protocol 2\n")
 		}
 	case 'S':
-		fmt.Printf("***** Get response for protocol 3 *****\n")
+		fmt.Printf("***** Got response for protocol 3 *****\n")
 	case 'r':
-		fmt.Printf("***** Get response for protocol 4 *****\n")
+		fmt.Printf("***** Got response for protocol 4 *****\n")
 
 	}
 
@@ -174,7 +176,8 @@ func createPacket(d []byte) []byte {
 		binary.BigEndian.PutUint16(data[3:], uint16(len))
 	}
 
-	crc16 := util.Crc16(data[:crcLen])
+	//crc16 := util.Crc16(data[:crcLen])
+	crc16 := uint16(0)
 	binary.BigEndian.PutUint16(data[crcLen:], crc16)
 
 	return data
