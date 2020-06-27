@@ -172,7 +172,7 @@ func createPacket(d []byte) []byte {
 		crcLen = len(data) - 3
 	} else {
 		crcLen = len(data) - 2
-		len := len(data) - 7
+		len := len(data)
 		binary.BigEndian.PutUint16(data[3:], uint16(len))
 	}
 

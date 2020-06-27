@@ -106,8 +106,13 @@ func (p *PacketIO) ReadPacket(ctx context.Context) (header []byte, data []byte, 
 	}
 
 	size := int(binary.BigEndian.Uint16(h[2:]))
+	if size <= 7 {
+		err = fmt.Errorf("ReadPacket: size shoud be more than 7")
+		err = errors.Trace(err)
+		return
+	}
 
-	data = p.Alloc.AllocWithLen(5+size+2, 5+size+2)
+	data = p.Alloc.AllocWithLen(size, size)
 	data[0] = b[0]
 	copy(data[1:], h[:])
 	p.SetReadTimeout()
