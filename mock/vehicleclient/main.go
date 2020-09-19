@@ -39,6 +39,9 @@ var (
 
 func main() {
 
+	crc := util.CrcCcittFfff([]byte("123456789"))
+	fmt.Printf("crcffff of 123456789:%x\n", crc)
+
 	flag.Parse()
 
 	//conn, err := net.Dial("tcp", "iot.cectiy.com:10001")
@@ -176,8 +179,8 @@ func createPacket(d []byte) []byte {
 		binary.BigEndian.PutUint16(data[3:], uint16(len))
 	}
 
-	//crc16 := util.Crc16(data[:crcLen])
-	crc16 := uint16(0)
+	crc16 := util.Crc16(data[:crcLen])
+	//crc16 := uint16(0)
 	binary.BigEndian.PutUint16(data[crcLen:], crc16)
 
 	return data
