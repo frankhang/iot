@@ -179,7 +179,7 @@ func createPacket(d []byte) []byte {
 		binary.BigEndian.PutUint16(data[3:], uint16(len))
 	}
 
-	crc16 := util.Crc16(data[:crcLen])
+	crc16 := util.CrcCcittFfff(data[:crcLen])
 	//crc16 := uint16(0)
 	binary.BigEndian.PutUint16(data[crcLen:], crc16)
 

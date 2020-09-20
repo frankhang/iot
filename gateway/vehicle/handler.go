@@ -40,8 +40,9 @@ func (th *Handler) Handle(ctx context.Context, cc *tcp.ClientConn, header []byte
 		ss = len(data) - 2
 	}
 
-	crc := util.Crc16(data[:ss])
-	expectedCrc := binary.BigEndian.Uint16(data[ss:])
+	crc := binary.BigEndian.Uint16(data[ss:])
+	expectedCrc := util.CrcCcittFfff(data[:ss])
+
 
 	//ctx = logutil.WithInt(ctx, "length", len(header)+len(data))
 	//ctx = logutil.WithString(ctx, "packet", fmt.Sprintf("%x%x", header, data))
