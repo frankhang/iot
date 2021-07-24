@@ -33,39 +33,39 @@ import (
 
 // Flag Names
 const (
-	nmVersion          = "V"
-	nmConfig           = "config"
-	nmConfigCheck      = "config-check"
-	nmConfigStrict     = "config-strict"
-	nmHost             = "host"
-	nmPort             = "P"
-	nmLogLevel         = "L"
-	nmLogFile          = "log-file"
-	nmReportStatus     = "report-status"
-	nmStatusHost       = "status-host"
-	nmStatusPort       = "status"
-	nmMetricsAddr      = "metrics-addr"
-	nmMetricsInterval  = "metrics-interval"
-	nmTokenLimit       = "token-limit"
-	nmAffinityCPU                = "affinity-cpus"
+	nmVersion         = "V"
+	nmConfig          = "config"
+	nmConfigCheck     = "config-check"
+	nmConfigStrict    = "config-strict"
+	nmHost            = "host"
+	nmPort            = "P"
+	nmLogLevel        = "L"
+	nmLogFile         = "log-file"
+	nmReportStatus    = "report-status"
+	nmStatusHost      = "status-host"
+	nmStatusPort      = "status"
+	nmMetricsAddr     = "metrics-addr"
+	nmMetricsInterval = "metrics-interval"
+	nmTokenLimit      = "token-limit"
+	nmAffinityCPU     = "affinity-cpus"
 )
 
 var (
 	version      = flagBoolean(nmVersion, false, "print version information and exit")
-	configPath   = flag.String(nmConfig, "", "config file path")
+	configPath   = flag.String(nmConfig, "vehicle.toml", "config file path")
 	configCheck  = flagBoolean(nmConfigCheck, false, "check config file validity and exit")
 	configStrict = flagBoolean(nmConfigStrict, false, "enforce config file validity")
 
 	// Base
 
-	host             = flag.String(nmHost, "0.0.0.0", "server host")
-	port             = flag.String(nmPort, "10001", "server port")
-	tokenLimit       = flag.Int(nmTokenLimit, 1000, "the limit of concurrent executed sessions")
-	affinityCPU      = flag.String(nmAffinityCPU, "", "affinity cpu (cpu-no. separated by comma, e.g. 1,2,3)")
+	host        = flag.String(nmHost, "0.0.0.0", "server host")
+	port        = flag.String(nmPort, "10001", "server port")
+	tokenLimit  = flag.Int(nmTokenLimit, 1000, "the limit of concurrent executed sessions")
+	affinityCPU = flag.String(nmAffinityCPU, "", "affinity cpu (cpu-no. separated by comma, e.g. 1,2,3)")
 
 	// Log
-	logLevel     = flag.String(nmLogLevel, "info", "log level: info, debug, warn, error, fatal")
-	logFile      = flag.String(nmLogFile, "", "log file path")
+	logLevel = flag.String(nmLogLevel, "info", "log level: info, debug, warn, error, fatal")
+	logFile  = flag.String(nmLogFile, "", "log file path")
 
 	// Status
 	reportStatus    = flagBoolean(nmReportStatus, true, "If enable status report HTTP service.")
@@ -73,7 +73,6 @@ var (
 	statusPort      = flag.String(nmStatusPort, "10080", "server status port")
 	metricsAddr     = flag.String(nmMetricsAddr, "", "prometheus pushgateway address, leaves it empty will disable prometheus push.")
 	metricsInterval = flag.Uint(nmMetricsInterval, 15, "prometheus client push interval in second, set \"0\" to disable prometheus push.")
-
 )
 
 var (
@@ -86,6 +85,7 @@ var deprecatedConfig = map[string]struct{}{
 	"pessimistic-txn.ttl": {},
 	"log.rotate":          {},
 }
+
 // hotReloadConfigItems lists all config items which support hot-reload.
 var hotReloadConfigItems = []string{"Performance.MaxProcs", "Performance.MaxMemory", "OOMAction", "MemQuotaQuery"}
 
@@ -107,6 +107,12 @@ func main() {
 		fmt.Println("config check successful")
 		os.Exit(0)
 	}
+
+	log.Warn("init config succesfully",
+		zap.String("logLevel", cfg.Log.Level),
+		zap.Uint("tokenLimit", cfg.TokenLimit),
+		zap.String("transferUrl", cfg.TransferUrl),
+	)
 	setGlobalVars()
 	setCPUAffinity()
 	setupLog()
@@ -229,13 +235,11 @@ func flagBoolean(name string, defaultVal bool, usage string) *bool {
 //	"log.rotate":          {},
 //}
 
-
 func setGlobalVars() {
 
 	runtime.GOMAXPROCS(int(cfg.Performance.MaxProcs))
 
 }
-
 
 func setupLog() {
 	err := logutil.InitZapLogger(cfg.Log.ToLogConfig())
@@ -311,8 +315,11 @@ func setupTracing() {
 }
 
 func runServer() {
+	//log.Info("Now listening", zap.Uint("port", cfg.Port))
+	fmt.Fprintf(os.Stderr, "Now listening on %d\n", cfg.Port)
 	err := svr.Run()
 	errors.MustNil(err)
+
 }
 
 func cleanup() {
@@ -335,9 +342,6 @@ func reloadConfig(nc, c *config.Config) {
 	}
 
 }
-
-
-
 
 func isDeprecatedConfigItem(items []string) bool {
 	for _, item := range items {
@@ -435,6 +439,5 @@ func overrideConfig() {
 	if actualFlags[nmMetricsInterval] {
 		cfg.Status.MetricsInterval = *metricsInterval
 	}
-
 
 }

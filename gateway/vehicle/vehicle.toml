@@ -2,6 +2,7 @@ host = "0.0.0.0"
 port = 10002
 token-limit = 1000
 read-timeout = 3
+transfer-url = "https://api.halouhuandian.com/Aimonitor/transfer.html"
 
 [log]
 level = "debug"

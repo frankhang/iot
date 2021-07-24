@@ -2,7 +2,7 @@
 
 #for linux
 
-version=1.1
+version=1.2
 
 if [ $# -gt 2 ]; then
   echo "Usage: $0 [service] [-r]"
