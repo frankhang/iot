@@ -74,34 +74,40 @@ func (th *Handler) Handle(ctx context.Context, cc *tcp.ClientConn, header []byte
 		return
 	}
 
-	logutil.BgLogger().Warn("listening ...")
+	//logutil.BgLogger().Warn("listening ...")
 	if data[0] == '(' {
 		switch cmd {
 		case 'h':
 			ctl.ctx = logutil.WithString(ctx, "method", "Protocol1")
-			err := ctl.Protocol1(header, data)
-			return errors.Trace(err)
+			err = ctl.Protocol1(header, data)
+
 		case 'c':
 			ctl.ctx = logutil.WithString(ctx, "method", "Protocol2")
-			err := ctl.Protocol2(header, data)
-			return errors.Trace(err)
+			err = ctl.Protocol2(header, data)
+
 		case 'S':
 			ctl.ctx = logutil.WithString(ctx, "method", "Protocol3")
-			err := ctl.Protocol3(header, data)
-			return errors.Trace(err)
+			err = ctl.Protocol3(header, data)
+
 		case 'r':
 			ctl.ctx = logutil.WithString(ctx, "method", "Protocol4")
-			err := ctl.Protocol4(header, data)
-			return errors.Trace(err)
+			err = ctl.Protocol4(header, data)
+
 		default:
 			logutil.Logger(ctx).Warn("no controller method found")
+
 		}
+
+
 
 	} else {
 		ctl.ctx = logutil.WithString(ctx, "method", "Data1")
-		err := ctl.Data1(header, data)
-		return errors.Trace(err)
+		err = ctl.Data1(header, data)
 
+	}
+
+	if err != nil {
+		return errors.Trace(err)
 	}
 
 	tt := time.Now().UnixNano() / 1e6
@@ -155,7 +161,6 @@ func (th *Handler) Handle(ctx context.Context, cc *tcp.ClientConn, header []byte
 
 		)
 	}
-
 
 	return nil
 }

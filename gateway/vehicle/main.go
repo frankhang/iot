@@ -111,6 +111,7 @@ func main() {
 	log.Warn("init config succesfully",
 		zap.String("logLevel", cfg.Log.Level),
 		zap.Uint("tokenLimit", cfg.TokenLimit),
+		zap.Uint("readTimeout", cfg.ReadTimeout),
 		zap.String("transferUrl", cfg.TransferUrl),
 	)
 	setGlobalVars()
