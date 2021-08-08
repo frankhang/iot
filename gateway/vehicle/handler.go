@@ -126,8 +126,8 @@ func (th *Handler) Handle(ctx context.Context, cc *tcp.ClientConn, header []byte
 		logutil.Logger(ctx).Debug("Transfer  to url",
 			zap.String("url", transferUrl),
 			//zap.Int64("time", tt),
-			//zap.String("cmd", cmdStr),
-			//zap.String("package", pp),
+			zap.String("cmdX", fmt.Sprintf("%x", cmd)),
+			zap.String("packageX", fmt.Sprintf("%x", pp)),
 			zap.String("msjon", jsonStr),
 		)
 	}
