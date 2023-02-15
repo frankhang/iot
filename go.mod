@@ -28,14 +28,12 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pingcap/fn v0.0.0-20200306044125-d5540d389059 // indirect
 	github.com/pingcap/tidb v2.0.11+incompatible // indirect
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.11.1
 	github.com/ryanuber/columnize v2.1.2+incompatible // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.6.0
 	github.com/struCoder/pidusage v0.2.0
 	github.com/tiancaiamao/appdash v0.0.0-20181126055449-889f96f722a2 // indirect
-	github.com/uber/jaeger-client-go v2.29.1+incompatible // indirect
-	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	go.uber.org/automaxprocs v1.4.0
 	go.uber.org/zap v1.16.0
 	sourcegraph.com/sourcegraph/appdash-data v0.0.0-20151005221446-73f23eafcf67 // indirect
